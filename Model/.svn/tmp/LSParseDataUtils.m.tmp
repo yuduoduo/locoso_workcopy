@@ -1,0 +1,103 @@
+//
+//  LSParseDataUtils.m
+//  Locoso
+//
+//  Created by zhiwei ma on 12-3-17.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LSParseDataUtils.h"
+
+@implementation LSParseDataUtils
++ (LSDataCategory*)parseCategory:(NSDictionary*)aJSONData
+{
+    LSDataCategory* category = [[[LSDataCategory alloc] init] autorelease];
+    
+    category.ID = [[aJSONData valueForKey:LSJSONKEY_id] longValue];
+    category.name = [aJSONData valueForKey:LSJSONKEY_name];
+    category.spell = [aJSONData valueForKey:LSJSONKEY_spell];
+    category.shortname = [aJSONData valueForKey:LSJSONKEY_shortname];
+    category.ico = [aJSONData valueForKey:LSJSONKEY_ico];
+    category.parentnames = [aJSONData valueForKey:LSJSONKEY_parentnames];
+    category.parentids = [aJSONData valueForKey:LSJSONKEY_parentids];
+    category.parented = [[aJSONData valueForKey:LSJSONKEY_parented] longValue];
+    category.cityname = [aJSONData valueForKey:LSJSONKEY_cityname];
+    category.cityid = [[aJSONData valueForKey:LSJSONKEY_cityid] longValue];
+    category.ishot = [[aJSONData valueForKey:LSJSONKEY_ishot] intValue];
+    category.arrchildid = [aJSONData valueForKey:LSJSONKEY_arrchildid];
+    category.childnum = [[aJSONData valueForKey:LSJSONKEY_childnum] intValue];
+    category.depth = [[aJSONData valueForKey:LSJSONKEY_depth] intValue];
+    category.childid = [aJSONData valueForKey:LSJSONKEY_childid];
+    
+    return category;
+}
++ (LSDataCompany*)parseCompany:(NSDictionary*)aJSONData
+{
+    LSDataCompanyDetail* company = [[[LSDataCompanyDetail alloc] init] autorelease];
+    
+    company.companyID = [[aJSONData valueForKey:LSJSONKEY_companyid] longValue];
+    company.companyName = [aJSONData valueForKey:LSJSONKEY_companyname];
+    company.logo = [aJSONData valueForKey:LSJSONKEY_logo];
+    company.address = [aJSONData valueForKey:LSJSONKEY_address];
+    
+    
+    return company;
+}
++ (LSDataCompanyDetail*)parseCompanyDetail:(NSDictionary*)aJSONData
+{
+    LSDataCompanyDetail* company = [[[LSDataCompanyDetail alloc] init] autorelease];
+    
+    company.companyID = [[aJSONData valueForKey:LSJSONKEY_companyid] longValue];
+    company.companyName = [aJSONData valueForKey:LSJSONKEY_companyname];
+    company.logo = [aJSONData valueForKey:LSJSONKEY_logo];
+    company.address = [aJSONData valueForKey:LSJSONKEY_address];
+    company.mapx  = [aJSONData valueForKey:LSJSONKEY_MapX];
+    company.mapy  = [aJSONData valueForKey:LSJSONKEY_MapY];
+    
+    return company;
+}
+
++ (LSDataProduct*)parseProduct:(NSDictionary*)aJSONData
+{
+        
+    LSDataProduct* product = [[[LSDataProduct alloc] init] autorelease];
+    
+    product.producid = [[aJSONData valueForKey:LSJSONKEY_ProductId] longValue];
+    product.productname = [aJSONData valueForKey:LSJSONKEY_ProductName];
+
+    
+    return product;
+
+}
+<<<<<<< .mine
+
++ (LSDataProduct*)parseCount:(NSDictionary*)aJSONData
+{
+
+    LSDataCount* product = [[[LSDataCount alloc] init] autorelease];
+
+
+    product.photocount = [aJSONData valueForKey:LSJSONKEY_PhotoCount];
+    product.mesgcount = [aJSONData valueForKey:LSJSONKEY_mesgcount];
+    product.viewCount = [aJSONData valueForKey:LSJSONKEY_viewCount];
+    product.procount = [aJSONData valueForKey:LSJSONKEY_procount];
+    product.newscount = [aJSONData valueForKey:LSJSONKEY_newscount];
+
+
+    return product;
+
+}
+
+=======
+
++ (LSDataNews*)parseNews:(NSDictionary*)aJSONData
+{
+    LSDataNews* news = [[[LSDataNews alloc] init] autorelease];
+    
+    news.articleid = [[aJSONData valueForKey:LSJSONKEY_articleid] longValue];
+    news.title = [aJSONData valueForKey:LSJSONKEY_title];
+    
+    return news;
+}
+>>>>>>> .r142
+@end

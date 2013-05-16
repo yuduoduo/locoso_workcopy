@@ -1,0 +1,28 @@
+//
+//  LSMyCompanyMessageDetailViewController.h
+//  Locoso
+//
+//  Created by zhiwei ma on 12-3-29.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LSBaseViewController.h"
+#import "LSVerifyMessagePE.h"
+#import "LSDeleteMessagePE.h"
+#import "LSAddMessagePE.h"
+@interface LSMyCompanyMessageDetailViewController : LSBaseViewController
+<LSBaseProtocolEngineDelegate,UITextViewDelegate>
+{
+    UIScrollView* _scrollView;
+    LSDataMessage* _message;
+    UILabel* _lbRemainNumber;
+    UITextView* _replyView;
+    
+    UITapGestureRecognizer* _tapGesture;
+    
+    LSVerifyMessagePE* _verifyPE;
+    LSDeleteMessagePE* _deletePE;
+    LSAddMessagePE* _addMessage;
+}
+@property (nonatomic, retain) LSDataMessage* message;
+@end

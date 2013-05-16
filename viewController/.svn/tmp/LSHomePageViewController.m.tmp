@@ -1,0 +1,432 @@
+//
+//  LSHomePageViewController.m
+//  Locoso
+//
+//  Created by yongchang hu on 12-3-19.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LSHomePageViewController.h"
+#import "JsonResturnCheck.h"
+#import "LSCompanyDetailViewController.h"
+#import "SearchResultViewController.h"
+#import "AppDelegate.h"
+#import "StarCompanyViewController.h"
+#import "ViewHistoryViewController.h"
+#import "SwitchCityViewController.h"
+#import "CheckNetwork.h"
+#import "LSParseDataUtils.h"
+#import "URLTranslateTool.h"
+#import "UIImageTool.h"
+#import "LSWatchHistoryViewController.h"
+#import "LSStarCompanyListViewController.h"
+#import "LSSwitchCityViewController.h"
+//#define LSLOCALTEST_HOMEPAGE
+#ifdef  LSLOCALTEST_HOMEPAGE
+#import "LSModalView.h"
+#import "LSMessageListViewController.h"
+#import "LSWebViewController.h"
+#import "LSCompanyPhotosListViewController.h"
+#import "LSSearchViewController.h"
+#endif
+#import "LSSearchResultViewController.h"
+#import "LSMyCompanyViewController.h"
+#import "LoginViewController.h"
+@interface LSHomePageViewController ()
+
+@end
+
+@implementation LSHomePageViewController
+@synthesize mySearchBar;
+@synthesize ADView = _ADView;
+@synthesize company1,company2,company3;
+@synthesize companyName1,companyName2,companyName3;
+@synthesize company4,company5,company6;
+@synthesize companyName4,companyName5,companyName6;
+@synthesize company7,company8,company9;
+@synthesize companyName7,companyName8,companyName9;
+@synthesize updownScrollView,recommendView;
+
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+{
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if (self) {
+        // Custom initialization
+        self.title =  @"本地搜" ;
+        self.tabBarItem.image = [UIImage imageNamed:@"first"];
+        self.tabBarItem.title = @"首页" ;
+    }
+    return self;
+}
+
+-(NSString*)getChooseCityData
+{
+    return  [[ NSUserDefaults standardUserDefaults] stringForKey:@"ChooseCityName"];
+    
+}
+
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    
+    mySearchBar.tintColor = LSCOLOS_SearchBar;
+    mySearchBar.autocorrectionType = UITextAutocorrectionTypeNo;
+    mySearchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    mySearchBar.showsCancelButton = NO;
+    
+    if (recommendView == nil) {
+        
+        // Load the header view that shows the recipe name and thumbnail
+		[[NSBundle mainBundle] loadNibNamed:@"LSHomePageView" owner:self options:nil];
+		//companyDetailHeaderView.backgroundColor = [UIColor groupTableViewBackgroundColor];
+        
+        [UIImageTool setLayerCorner:company1.layer];
+        [UIImageTool setLayerCorner:company2.layer];
+        [UIImageTool setLayerCorner:company3.layer];
+        [UIImageTool setLayerCorner:company4.layer];
+        [UIImageTool setLayerCorner:company5.layer];
+        [UIImageTool setLayerCorner:company6.layer];
+        [UIImageTool setLayerCorner:company7.layer];
+        [UIImageTool setLayerCorner:company8.layer];
+        [UIImageTool setLayerCorner:company9.layer];
+	}
+    //    recommendView.frame = CGRectMake(0,0,320, 360);
+    [updownScrollView addSubview:recommendView];
+    updownScrollView.frame = CGRectMake(0,137,320, 350);
+    updownScrollView.contentSize = CGSizeMake(320, 520);
+    
+    [mySearchBar setDelegate:self];
+    
+    if (nil == _recomCompanyPE)
+    {
+        _recomCompanyPE = [[LSRecomCompanyPE alloc] init];
+        _recomCompanyPE.delegate = self;
+    }
+
+    if (nil == _ADPE)
+    {
+        _ADPE = [[LSADPE alloc] init];
+        _ADPE.delegate = self;
+    }
+}
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    //设置nav item
+    LSDataCity* selectedCity = [LSGlobalData sharedInstance].systemConfig.selectedCity;
+    NSString* selectedCityName = selectedCity.shortname ;
+    [self setNavigationBarButtonItemWithTitleStytlePlain:selectedCityName itemType:LSNavigationbarButtonItem_Right];
+    
+     //获取推荐企业列表
+    if (_curCityID != selectedCity.ID)
+    {
+        
+        _recomCompanyPE.cityID = selectedCity.ID;
+        [_recomCompanyPE sendRequest];
+        [self startWaiting];
+    }
+    else 
+    {
+        if ([_recomCompanyPE.rspData.arrCategory count] > 0)
+        {
+            [self setDataToController];
+        }
+        else 
+        {
+            [_recomCompanyPE sendRequest];
+            [self startWaiting];
+        }
+    }
+    _curCityID = selectedCity.ID;
+    
+    //获取推荐企业列表
+    if (nil == _ADPE.rspData)
+    {
+        [_ADPE sendRequest];
+    }
+}
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [mySearchBar resignFirstResponder];
+    [_recomCompanyPE cancelRequest];
+}
+- (void)viewDidUnload
+{
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+    self.ADView = nil;
+    
+}
+- (void)dealloc
+{
+    self.ADView = nil;
+    [_recomCompanyPE cancelRequest];
+    [_recomCompanyPE release];
+
+    [super dealloc];
+}
+
+- (void)navigationRightButtonItemClicked:(id)aSender
+{
+    LSSwitchCityViewController* vc = [[LSSwitchCityViewController alloc] initWithNibName:@"LSSwitchCityViewController" bundle:nil];
+    vc.selectDelegate = self;
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+}
+
+#pragma mark UISearchBarDelegate
+
+- (void)searchBarTextDidBeginEditing:(UISearchBar *)searchBar
+{
+	mySearchBar.showsCancelButton = YES;
+}
+
+- (void)searchBarTextDidEndEditing:(UISearchBar *)searchBar
+{
+	mySearchBar.showsCancelButton = NO;
+}
+
+- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
+{
+    
+    
+}
+
+// called when cancel button pressed
+- (void)searchBarCancelButtonClicked:(UISearchBar *)searchBar
+{
+    mySearchBar.showsCancelButton = NO;
+    mySearchBar.text = nil;
+    [mySearchBar resignFirstResponder];
+}
+
+// called when Search (in our case "Done") button pressed
+- (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar
+{
+	[searchBar resignFirstResponder];
+
+    LSSearchResultViewController* vc = [[LSSearchResultViewController alloc] initWithNibName:@"LSSearchResultViewController" bundle:nil];
+    vc.keyword = searchBar.text;
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+}
+
+#pragma mark IBAction
+
+- (IBAction)ADButtonClicked:(id)sender
+{
+//    NSString* urlStr = _ADPE.rspData.AD.url;
+    NSURL* url = [NSURL URLWithString:_ADPE.rspData.AD.url];
+    if (url)
+    {
+        [[UIApplication sharedApplication] openURL:url];
+    }
+}
+
+-(IBAction)goListAction:(id)sender{
+#ifdef LSLOCALTEST_HOMEPAGE
+//        LSMessageListViewController* vc = [[LSMessageListViewController alloc] initWithNibName:@"LSMessageListViewController" bundle:nil];
+    
+//    LSWebViewController* vc = [[LSWebViewController alloc] initWithNibName:@"LSWebViewController" bundle:nil];
+//    vc.url = [NSURL URLWithString:@"http://www.locoso.org/uploads/s/0000/0000/0014/3046/logo_0.jpg"];
+    
+//    LSCompanyPhotosListViewController* vc = [[LSCompanyPhotosListViewController alloc] initWithNibName:@"LSPhotosListViewController" bundle:nil];
+//    vc.companyID = 1;
+    LSSearchViewController* vc = [[LSSearchViewController alloc] initWithNibName:@"LSSearchViewControllerView" bundle:nil];
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+    return;
+#endif
+    
+    AppDelegate *appDelegate = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+    [appDelegate setTabBarIndex:1];
+}
+-(IBAction)goCompanyManageAction:(id)sender{
+    
+    
+    {
+        AppDelegate *appDelegate = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+        [appDelegate setTabBarIndex:3];
+        if (![commonManager whetherLoginIn]) {
+            //
+            LoginViewController *loginvew=[[[LoginViewController alloc] initWithNibName:@"LoginView" bundle:nil] autorelease];
+            
+            [self.tabBarController presentModalViewController:loginvew animated:NO];
+            
+        }
+   }
+}
+-(IBAction)goStarCompanyAction:(id)sender{
+
+    
+    LSStarCompanyListViewController* vc = [[LSStarCompanyListViewController alloc] initWithNibName:@"LSStarCompanyListViewController" bundle:nil];
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+}
+-(IBAction)goHistoryAction:(id)sender{
+
+    
+    LSWatchHistoryViewController* vc = [[LSWatchHistoryViewController alloc] initWithNibName:@"LSWatchHistoryViewController" bundle:nil];
+    vc.title = @"历史浏览";
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+}
+
+-(IBAction)goRecommCompany1Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:0];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+    
+}
+-(IBAction)goRecommCompany2Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:1];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(IBAction)goRecommCompany3Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:2];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(IBAction)goRecommCompany4Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:3];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(IBAction)goRecommCompany5Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:4];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(IBAction)goRecommCompany6Action:(id)sender{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:5];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(IBAction)goRecommCompany7Action:(id)sender{
+    [self goToDetailCompanyView:6];
+}
+-(IBAction)goRecommCompany8Action:(id)sender{
+    [self goToDetailCompanyView:7];
+}
+-(IBAction)goRecommCompany9Action:(id)sender{
+    [self goToDetailCompanyView:8];
+}
+-(void)goToDetailCompanyView:(NSInteger)index
+{
+    LSCompanyDetailViewController *targetViewController = [[[LSCompanyDetailViewController alloc] initWithNibName:@"LSCompanyDetailViewController" bundle:nil] autorelease];
+    if ([_recomCompanyPE.rspData.arrCategory count] != 0) {
+        LSDataCompany *dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:index];
+        
+        targetViewController.companyID = dataDictionary.companyID;
+        
+        [self.navigationController pushViewController:targetViewController animated:YES];
+    }
+}
+-(void)setDataToController
+{
+
+    
+    NSString *ssize = @"3";
+    if ([_recomCompanyPE.rspData.arrCategory count] > 8) {
+        LSDataCompany *dataDictionary;
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:0];
+        companyName1.text = dataDictionary.companyName;
+        [self addImage:company1 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:1];
+        companyName2.text = dataDictionary.companyName;
+        [self addImage:company2 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:2];
+        companyName3.text = dataDictionary.companyName;
+        [self addImage:company3 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:3];
+        companyName4.text = dataDictionary.companyName;
+        [self addImage:company4 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo   idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:4];
+        companyName5.text = dataDictionary.companyName;
+        [self addImage:company5 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:5];
+        companyName6.text = dataDictionary.companyName;
+        [self addImage:company6 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:6];
+        companyName7.text = dataDictionary.companyName;
+        [self addImage:company7 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:7];
+        companyName8.text = dataDictionary.companyName;
+        [self addImage:company8 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+        
+        dataDictionary = [_recomCompanyPE.rspData.arrCategory objectAtIndex:8];
+        companyName9.text = dataDictionary.companyName;
+        [self addImage:company9 imageURL:[URLTranslateTool OldUrlTranslateTo:dataDictionary.logo  idd:ssize]];
+    }
+}
+
+#pragma mark LSSelectDistrictProtocol LSSelectIndustryProtocol
+- (void)didSelectDistrict:(LSDataCity*)aCity
+{
+    [self.navigationController popToViewController:self animated:YES];
+}
+
+#pragma mark LSBaseProtocolEngineDelegate
+- (void)didProtocolEngineFinished:(LSBaseProtocolEngine*)aEngine newData:(id)aData
+{
+    [self stopWaiting];
+    if (_recomCompanyPE == aEngine) 
+    {
+        [self setDataToController];
+    }
+    else if (_ADPE == aEngine)
+    {
+        [self addImage:self.ADView imageURL:_ADPE.rspData.AD.url];
+    }
+}
+
+- (void)didProtocolEngineFailed:(LSBaseProtocolEngine *)aEngine error:(NSError*)aError
+{
+    [self stopWaiting];
+    NSLog(@"%s %@",__FUNCTION__, aError);
+}
+@end

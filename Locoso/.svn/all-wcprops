@@ -1,0 +1,131 @@
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/locoso.iphone/!svn/ver/329/trunk/Locoso/Locoso
+END
+LSGlobalData.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/locoso.iphone/!svn/ver/306/trunk/Locoso/Locoso/LSGlobalData.h
+END
+main.m
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/locoso.iphone/!svn/ver/105/trunk/Locoso/Locoso/main.m
+END
+LSDefine.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/locoso.iphone/!svn/ver/310/trunk/Locoso/Locoso/LSDefine.h
+END
+Locoso-Info.plist
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/locoso.iphone/!svn/ver/329/trunk/Locoso/Locoso/Locoso-Info.plist
+END
+LSImageDefine.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/locoso.iphone/!svn/ver/279/trunk/Locoso/Locoso/LSImageDefine.h
+END
+LSGlobalData.m
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/locoso.iphone/!svn/ver/308/trunk/Locoso/Locoso/LSGlobalData.m
+END
+LSFileUtils.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/locoso.iphone/!svn/ver/207/trunk/Locoso/Locoso/LSFileUtils.h
+END
+LSImagesViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/locoso.iphone/!svn/ver/315/trunk/Locoso/Locoso/LSImagesViewController.h
+END
+LSFileUtils.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/locoso.iphone/!svn/ver/207/trunk/Locoso/Locoso/LSFileUtils.m
+END
+LSString.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/locoso.iphone/!svn/ver/249/trunk/Locoso/Locoso/LSString.h
+END
+LSBaseViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/locoso.iphone/!svn/ver/311/trunk/Locoso/Locoso/LSBaseViewController.h
+END
+LSImagesViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/locoso.iphone/!svn/ver/315/trunk/Locoso/Locoso/LSImagesViewController.m
+END
+LSListViewController.h
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/locoso.iphone/!svn/ver/225/trunk/Locoso/Locoso/LSListViewController.h
+END
+LSString.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/locoso.iphone/!svn/ver/228/trunk/Locoso/Locoso/LSString.m
+END
+AppDelegate.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/locoso.iphone/!svn/ver/316/trunk/Locoso/Locoso/AppDelegate.h
+END
+Locoso-Prefix.pch
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/locoso.iphone/!svn/ver/105/trunk/Locoso/Locoso/Locoso-Prefix.pch
+END
+LSBaseViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/locoso.iphone/!svn/ver/311/trunk/Locoso/Locoso/LSBaseViewController.m
+END
+LSListViewController.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/locoso.iphone/!svn/ver/283/trunk/Locoso/Locoso/LSListViewController.m
+END
+LSStringDefine.h
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/locoso.iphone/!svn/ver/313/trunk/Locoso/Locoso/LSStringDefine.h
+END
+AppDelegate.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/locoso.iphone/!svn/ver/316/trunk/Locoso/Locoso/AppDelegate.m
+END
+Locoso.entitlements
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/locoso.iphone/!svn/ver/105/trunk/Locoso/Locoso/Locoso.entitlements
+END

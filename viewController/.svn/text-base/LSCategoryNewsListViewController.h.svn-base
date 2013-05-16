@@ -1,0 +1,16 @@
+//
+//  LSCategoryNewsListViewController.h
+//  Locoso
+//
+//  Created by zhiwei ma on 12-3-20.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LSNewsListViewController.h"
+
+@interface LSCategoryNewsListViewController : LSNewsListViewController
+{
+    long _categoryID;
+}
+@property (nonatomic) long categoryID;
+@end

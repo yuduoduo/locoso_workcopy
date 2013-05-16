@@ -1,0 +1,279 @@
+ //
+//  LSPhotosListViewController.m
+//  Locoso
+//
+//  Created by zhiwei ma on 12-3-20.
+//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
+//
+
+#import "LSPhotosListViewController.h"
+#import "LSPhotosListPE.h"
+#import "LSWebViewController.h"
+#import "LSString.h"
+#import "LSModalView.h"
+#import "LSImageDetailViewController.h"
+
+#pragma mark - LSPhotosListViewController (LSPrivate)
+@interface LSPhotosListViewController (LSPrivate)
+- (void)makePhotoEditing:(BOOL)aEnabled;
+- (void)updateTableView:(BOOL)aEdit;
+- (void)loadPhotoDetailViewController:(LSDataPhoto*)aPhoto;
+- (void)startDeletePhoto:(LSDataPhoto*)aPhoto;
+- (void)removePhotoInDataSource:(long)aMediaID;
+@end
+
+@implementation LSPhotosListViewController (LSPrivate)
+- (void)makePhotoEditing:(BOOL)aEnabled
+{
+//    if (_isEdit == aEnabled)
+//    {
+//        return;
+//    }
+    
+    _isEditing = aEnabled;
+    if (NO == _isEditing)
+    {
+        [self setNavigationBarButtonItemWithTitleStytlePlain:LSString_edit itemType:LSNavigationbarButtonItem_Right];
+        self.navigationItem.leftBarButtonItem = nil;
+    }
+    else 
+    {
+        [self setNavigationBarButtonItemWithTitleStytlePlain:LSString_done itemType:LSNavigationbarButtonItem_Right];
+        [self setNavigationBarButtonItemWithTitleStytlePlain:LSString_add itemType:LSNavigationbarButtonItem_Left];
+    }
+    [self updateTableView:aEnabled];
+}
+
+- (void)updateTableView:(BOOL)aEdit
+{    
+    UITableViewCell* cell = nil;
+    LSPhotoItemView* item = nil;
+    
+    NSArray* arrCell = _tableView.visibleCells;
+    for (NSInteger i = 0; i < [arrCell count]; i++)
+    {
+        cell = [arrCell objectAtIndex:i];
+        
+        item = (LSPhotoItemView*)[cell.contentView viewWithTag:101];
+        item.state = aEdit ? LSPhotoItemViewStateDelete : LSPhotoItemViewStateNormal;
+        
+        item = (LSPhotoItemView*)[cell.contentView viewWithTag:102];
+        if (NO == item.hidden)
+        {
+            item.state = aEdit ? LSPhotoItemViewStateDelete : LSPhotoItemViewStateNormal;
+        }
+    }
+}
+
+- (void)loadPhotoDetailViewController:(LSDataPhoto*)aPhoto
+{
+//    NSURL* url = [NSURL URLWithString:[aPhoto.filepath stringByHandleImageURLOriginal]];
+//    LSWebViewController* vc = [[LSWebViewController alloc] initWithNibName:@"LSWebViewController" bundle:nil];
+//    vc.url = url;
+//    [self.navigationController pushViewController:vc animated:YES];
+//    [vc release];
+    
+    NSString* imageurl = [aPhoto.filepath stringByHandleImageURLOriginal];
+    LSImageDetailViewController* vc = [[LSImageDetailViewController alloc] initWithNibName:@"LSImageDetailViewController" bundle:nil];
+    vc.imageURL = imageurl;
+    [self.navigationController pushViewController:vc animated:YES];
+    [vc release];
+}
+
+- (void)startDeletePhoto:(LSDataPhoto*)aPhoto
+{
+    _photoDeletePE.mediaid = aPhoto.mediaid;
+    NSDictionary *dic = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithLong: aPhoto.mediaid],@"mediaid",
+                         aPhoto.medianame,@"medianame",
+                         aPhoto.filepath,@"filepath",
+                         nil];
+    _photoDeletePE.dic = dic;
+    _photoDeletePE.keepLastRequest = YES;
+    [_photoDeletePE sendRequest];
+    [self startHUDWaiting:LSString_deleting];;
+}
+
+- (void)removePhotoInDataSource:(long)aMediaID
+{
+    NSMutableArray* arrPhoto = _listPE.rspData.arrContent;
+    @synchronized (arrPhoto)
+    {
+        for (LSDataPhoto* photo in arrPhoto)
+        {
+            if (photo.mediaid == aMediaID)
+            {
+                [arrPhoto removeObject:photo];
+                break;
+            }
+        }
+    }
+}
+@end
+
+#pragma mark - LSPhotosListViewController
+@implementation LSPhotosListViewController
+@synthesize canEdit = _canEdit;
+
+- (void)dealloc
+{
+    [_photoDeletePE cancelRequest];
+    [_photoDeletePE release];
+    [_placeHolderImage release];
+    [super dealloc];
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.morePage = YES;
+    if (nil == _photoDeletePE)
+    {
+        _photoDeletePE = [[LSPhotoDeletePE alloc] init];
+        _photoDeletePE.delegate = self;
+    }
+    
+    _placeHolderImage = LSImageByName(LSImage_icon_placeholder);
+    [_placeHolderImage retain];
+}
+
+- (void)viewWillAppear:(BOOL)animated
+{
+    [super viewWillAppear:animated];
+    
+    if (_canEdit)
+    {
+        [self makePhotoEditing:NO];
+    }
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self makePhotoEditing:NO];
+}
+
+- (void)navigationRightButtonItemClicked:(id)aSender
+{
+    [self makePhotoEditing:!_isEditing];
+}
+
+- (void)loadComponentViews
+{
+    [super loadComponentViews];
+    _tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+}
+
+#pragma mark LSPhotosTableViewCellDelegate
+- (void)didItemClicked:(LSPhotosTableViewCell*)aCell itemIndex:(NSInteger)aIndex
+{
+    NSIndexPath* indexPath = [_tableView indexPathForCell:aCell];
+    NSAssert(indexPath, @"");
+    NSInteger indexInDataSource = indexPath.row * 2 + aIndex;
+    LSDataPhoto* photo = [_listPE.rspData.arrContent objectAtIndex:indexInDataSource];
+    [self loadPhotoDetailViewController:photo];
+}
+
+- (void)didDeleteItem:(LSPhotosTableViewCell*)aCell itemIndex:(NSInteger)aIndex
+{
+    NSUInteger ret = [LSModalAlertView confirmMessageBox:nil message:@"是否删除？"];
+    
+    if (0 != ret)
+    {
+        NSIndexPath* indexPath = [_tableView indexPathForCell:aCell];
+        NSAssert(indexPath, @"");
+        NSInteger indexInDataSource = indexPath.row * 2 + aIndex;
+        LSDataPhoto* photo = [_listPE.rspData.arrContent objectAtIndex:indexInDataSource];
+        [self startDeletePhoto:photo];
+    }
+}
+
+#pragma mark UITableViewDataSource,UITableViewDelegate
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    NSInteger photosCount = [_listPE.rspData.arrContent count];
+    if (photosCount > 0)
+    {
+        if (photosCount % 2 == 0)
+        {
+            return photosCount/2;
+        }
+        else 
+        {
+            return photosCount/2 + 1;
+        }
+    }
+    return 0;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSString* reuseID = @"photoCell";
+    LSPhotosTableViewCell* cell = (LSPhotosTableViewCell*)[_tableView dequeueReusableCellWithIdentifier:reuseID];
+    if (nil == cell)
+    {
+        cell = [[[LSPhotosTableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseID] autorelease];
+        cell.delegate = self;
+    }
+    NSLog(@"%@",cell);
+    
+    NSInteger maxIndexInDataSource = [_listPE.rspData.arrContent count] - 1;
+    NSArray* arrContent = _listPE.rspData.arrContent;
+    LSPhotoItemView* item = nil;
+    NSInteger indexInDataSource = 0;
+    LSDataPhoto* photo = nil;;
+    
+    item = cell.leftItem;
+    cell.leftItem.hidden = NO;
+    item.state = _isEditing ? LSPhotoItemViewStateDelete : LSPhotoItemViewStateNormal;
+    indexInDataSource = indexPath.row * 2;
+    photo = [arrContent objectAtIndex:indexInDataSource];
+    item.textLabel.text = photo.medianame;
+    item.imageView.tag = indexInDataSource;
+    [self addImage:item.imageView imageURL:[photo.filepath stringByHandleImageURL]];
+    cell.clipsToBounds = YES;
+    item = cell.rightItem;
+    if (indexInDataSource == maxIndexInDataSource) 
+    {
+        item.hidden = YES;
+    }
+    else 
+    {
+        item.hidden = NO;
+        item.state = _isEditing ? LSPhotoItemViewStateDelete : LSPhotoItemViewStateNormal;
+        indexInDataSource++;
+        photo = [arrContent objectAtIndex:indexInDataSource];
+        item.textLabel.text = photo.medianame;
+        [self addImage:item.imageView imageURL:[photo.filepath stringByHandleImageURL]];
+    }
+    return cell;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    return 165.0f;
+}
+
+#pragma mark LSBaseProtocolEngineDelegate
+- (void)didProtocolEngineFinished:(LSBaseProtocolEngine*)aEngine newData:(id)aData
+{
+    [super didProtocolEngineFinished:aEngine newData:aData];
+    if (_photoDeletePE == aEngine)
+    {
+        [self removePhotoInDataSource:_photoDeletePE.mediaid];
+        [self loadComponentViews];
+        _photoDeletePE.keepLastRequest = NO;
+    }
+}
+- (void)didProtocolEngineFailed:(LSBaseProtocolEngine *)aEngine error:(NSError*)aError
+{
+    [self stopWaiting];
+    if (_photoDeletePE == aEngine)
+    {
+        [LSModalAlertView messageBox:nil message:LSString_delete_failed];
+    }
+    else 
+    {
+        [super didProtocolEngineFailed:aEngine error:aError];
+    }
+}
+@end
